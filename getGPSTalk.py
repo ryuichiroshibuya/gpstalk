@@ -28,14 +28,21 @@ class GpsPoller(threading.Thread):
 
 class DBExecute:
   def run(self,val1,val2):
+     point = "\'POINT(%f %f)\'" % (val2,val1)
+     #print point
+
      conn = psycopg2.connect("dbname=pgis host=localhost user=postgres password=postgres")
      cur = conn.cursor()
-     cur.execute("""
+
+     sql = """
 SELECT '現在の住所は'||pref_name||city_name||street_name||address||'番地付近です' 
 FROM address 
-WHERE ST_DWithin(geom2,ST_GeomFromText('POINT(139.802933333 35.788736667)',4326),1000) 
-ORDER BY ST_Distance(geom2,ST_GeomFromText('POINT(139.802933333 35.788736667)',4326)) limit 1;
-     """)
+WHERE ST_DWithin(geom2,ST_GeomFromText(%s,4326),1000) 
+ORDER BY ST_Distance(geom2,ST_GeomFromText(%s,4326)) limit 1;
+     """ % ( point, point )
+     print sql
+
+     cur.execute(sql)
      ret = cur.fetchone()
      cur.close()
 
